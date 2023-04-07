@@ -64,6 +64,7 @@ wifi:
   ap:
     ssid: "HackemLock Fallback Hotspot"
     password: !secret wifi_fallback_password
+    
 
 captive_portal:
 
@@ -71,6 +72,20 @@ binary_sensor:
   - platform: status
     name: "Node Status"
     id: system_status
+  - platform: gpio
+    name: Button
+    pin:
+      number: D0
+      mode:
+        input: true
+        pulldown: true
+    on_click:
+      - switch.turn_on: relay
+      
+status_led:
+  pin:
+    number: D5
+    inverted: true
 
 # We can still control the backlight independently
 switch:
