@@ -25,9 +25,11 @@ interval:
           then:
             - lambda: |-
                 id(wifi_connected) = true;
+            - script.execute: status_wifi_connected
           else:
             - lambda: |-
                 id(wifi_connected) = false;
+            - script.execute: status_no_connection
 
 mqtt:
   broker: 192.168.1.100
@@ -36,9 +38,11 @@ mqtt:
   on_connect:
     - lambda: |-
         id(mqtt_connected) = true;
+    - script.execute: status_ready
   on_disconnect:
     - lambda: |-
         id(mqtt_connected) = false;
+    - script.execute: status_wifi_connected
   on_message:
     topic: door
     payload: "1"
@@ -64,7 +68,6 @@ wifi:
   ap:
     ssid: "HackemLock Fallback Hotspot"
     password: !secret wifi_fallback_password
-    
 
 captive_portal:
 
@@ -79,15 +82,56 @@ binary_sensor:
       mode:
         input: true
         pulldown: true
-    on_click:
+    on_press:
       - switch.turn_on: relay
-      
-status_led:
-  pin:
-    number: D5
-    inverted: true
 
-# We can still control the backlight independently
+script:
+  - id: status_no_connection
+    then: 
+      - while:
+          condition:
+            not:
+              wifi.connected
+          then:
+            - switch.turn_on: status_light
+            - delay: 100ms
+            - switch.turn_off: status_light
+            - delay: 100ms
+  - id: status_wifi_connected
+    then: 
+      - while:
+          condition:
+            and: 
+              - wifi.connected:
+              - not: 
+                  mqtt.connected:
+          then:
+            - switch.turn_on: status_light
+            - delay: 250ms
+            - switch.turn_off: status_light
+            - delay: 250ms
+      - script.execute: status_ready
+  - id: status_ready
+    then: 
+      - switch.turn_on: status_light
+  - id: door_opened
+    then: 
+      - switch.turn_off: status_light
+      - delay: 100ms
+      - switch.turn_on: status_light
+      - delay: 100ms
+      - switch.turn_off: status_light
+      - delay: 100ms
+      - switch.turn_on: status_light
+      - delay: 100ms
+      - switch.turn_off: status_light
+      - delay: 100ms
+      - switch.turn_on: status_light
+      - delay: 100ms
+      - switch.turn_off: status_light
+      - delay: 100ms
+      - switch.turn_on: status_light
+
 switch:
   - platform: gpio
     name: "Door Relay"
@@ -99,8 +143,13 @@ switch:
         open_drain: true
         output: true
     on_turn_on:
-      - delay: 500ms
+      - script.execute: door_opened
+      - delay: 100ms
       - switch.turn_off: relay
+  - platform: gpio
+    name: Status LED
+    id: status_light
+    pin: D5
 
 web_server:
   port: 80
