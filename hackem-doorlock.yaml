@@ -174,8 +174,8 @@ light:
       - pulse:
       - pulse:
           name: "Very Fast Pulse"
-          transition_length: 0.1s
-          update_interval: 0.1s
+          transition_length: 0.2s
+          update_interval: 0.2s
       - pulse:
           name: "Fast Pulse"
           transition_length: 0.3s
