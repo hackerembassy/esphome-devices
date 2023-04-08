@@ -130,6 +130,16 @@ script:
       - light.turn_on:
           id: status_light
           effect: "None"
+      - if:
+          condition:
+            - script.is_running: status_wifi_connected
+          then:
+            - script.stop: status_wifi_connected
+      - if:
+          condition:
+            - script.is_running: status_no_connection
+          then:
+            - script.stop: status_no_connection
 
 switch:
   - platform: gpio
