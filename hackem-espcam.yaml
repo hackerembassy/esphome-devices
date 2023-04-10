@@ -41,7 +41,7 @@ esp32_camera:
   power_down_pin: GPIO32
   resolution: 1600x1200
   name: esp_cam
-  idle_framerate: 0.1fps
+  idle_framerate: 0.5fps
 
 esp32_camera_web_server:
   - port: 8080
