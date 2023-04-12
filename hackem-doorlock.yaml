@@ -1,7 +1,8 @@
 esphome:
   name: hackem-doorlock
-  board: d1_mini
-  platform: esp8266
+  friendly_name: "Hackem Doorlock"
+  board: featheresp32
+  platform: esp32
 
 # Enable logging
 logger:
@@ -28,12 +29,12 @@ interval:
                   not:
                     mqtt.connected:
                 then:
-                  # - lambda: |-
-                  #     id(wifi_connected) = true;
+                  - lambda: |-
+                      id(wifi_connected) = true;
                   - script.execute: status_wifi_connected
           else:
-            # - lambda: |-
-            #     id(wifi_connected) = false;
+            - lambda: |-
+                id(wifi_connected) = false;
             - script.execute: status_no_connection
 
 mqtt:
@@ -41,12 +42,12 @@ mqtt:
   username: door
   password: !secret mqtt_password
   on_connect:
-    # - lambda: |-
-    #     id(mqtt_connected) = true;
+    - lambda: |-
+        id(mqtt_connected) = true;
     - script.execute: status_ready
   on_disconnect:
-    # - lambda: |-
-    #     id(mqtt_connected) = false;
+    - lambda: |-
+        id(mqtt_connected) = false;
     - script.execute: status_wifi_connected
   on_message:
     topic: door
@@ -69,7 +70,7 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: "HackemLock Fallback Hotspot"
+    ssid: "Hackem Fallback"
     password: !secret wifi_fallback_password
 
 captive_portal:
@@ -79,9 +80,26 @@ binary_sensor:
     name: "Node Status"
     id: system_status
   - platform: gpio
-    name: Button
     pin:
-      number: D0
+      number: GPIO0
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "T-Display Button 0"
+    id: tdisplay_button_input_0
+  - platform: gpio
+    pin:
+      number: GPIO35
+      inverted: true
+    name: "T-Display Button 1"
+    id: tdisplay_button_input_1
+    on_click:
+      - switch.turn_on: relay
+  - platform: gpio
+    name: Unlock Button
+    pin:
+      number: GPIO26
       mode:
         input: true
         pulldown: true
@@ -110,22 +128,22 @@ script:
           effect: "Fast Pulse"
       - while:
           condition:
-            and: 
+            and:
               - wifi.connected:
-              - not: 
+              - not:
                   mqtt.connected:
           then:
             - delay: 250ms
       - script.execute: status_ready
 
   - id: status_ready
-    then: 
+    then:
       - light.turn_on:
           id: status_light
           effect: "None"
 
   - id: door_opened
-    then: 
+    then:
       # - light.turn_off:
       #     id: status_light
       #     transition_length: 0s
@@ -154,9 +172,10 @@ script:
 switch:
   - platform: gpio
     name: "Door Relay"
+    restore_mode: ALWAYS_OFF
     id: relay
-    pin: 
-      number: D4
+    pin:
+      number: GPIO27
       inverted: true
       mode:
         open_drain: true
@@ -171,11 +190,59 @@ button:
     name: Restart
 
 output:
-  - platform: esp8266_pwm
+  - platform: ledc
     id: output_status
-    pin: D5
+    pin: GPIO25
+  - platform: ledc
+    id: backlight_led
+    pin: GPIO4
+    
+image:
+  - file: "doorlock/flag.png"
+    id: british_flag
+    resize: 240x120
+    type: RGB24
+  - file: "doorlock/error.png"
+    id: error_icon
+    resize: 100x100
+    type: RGB24
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+  
+display:
+  - platform: st7789v
+    model: TTGO TDisplay 135x240
+    cs_pin: GPIO5
+    dc_pin: GPIO16
+    reset_pin: GPIO23
+    rotation: 270
+    lambda: |-
+      //if (id(system_status).state) {
+      if (id(mqtt_connected)) {
+        it.image(0, 7, id(british_flag));
+        //it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
+      } else {
+        it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
+        it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
+        it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
+
+        it.image(82, 34, id(error_icon));
+        it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
+        if (id(wifi_connected)) {
+            it.print(120, 115, id(roboto_12), id(my_green), TextAlign::TOP_CENTER, "Wi-Fi connected");
+        } else {
+            it.print(120, 115, id(roboto_12), id(my_red), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
+        }
+      }
 
 light:
+  - platform: monochromatic
+    name: "LCD Backlight"
+    restore_mode: ALWAYS_ON
+    id: backlight
+    output: backlight_led
   - platform: monochromatic
     name: "Status Light"
     id: status_light
@@ -210,6 +277,33 @@ light:
               duration: 50ms
             - state: false
               duration: 50ms
+
+color:
+  - id: my_red
+    red: 100%
+    green: 0%
+    blue: 0%
+  - id: my_yellow
+    red: 100%
+    green: 100%
+    blue: 0%
+  - id: my_green
+    red: 0%
+    green: 100%
+    blue: 0%
+  - id: my_blue
+    red: 0%
+    green: 0%
+    blue: 100%
+  - id: my_gray
+    red: 50%
+    green: 50%
+    blue: 50%
+
+font:
+  - file: "gfonts://Roboto"
+    id: roboto_12
+    size: 12
 
 web_server:
   port: 80
