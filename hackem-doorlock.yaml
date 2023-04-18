@@ -182,9 +182,9 @@ switch:
     id: relay
     pin:
       number: GPIO27
-      inverted: true
+      inverted: false
       mode:
-        open_drain: true
+        open_drain: false
         output: true
     on_turn_on:
       - script.execute: door_opened
