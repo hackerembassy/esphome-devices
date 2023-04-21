@@ -38,7 +38,7 @@ interval:
             - script.execute: status_no_connection
 
 mqtt:
-  broker: 192.168.1.100
+  broker: 192.168.1.1
   username: door
   password: !secret mqtt_password
   on_connect:
@@ -53,6 +53,9 @@ mqtt:
     topic: door
     payload: "1"
     then:
+      - mqtt.publish:
+          topic: door/response
+          payload: "unlocked"
       - switch.turn_on: relay
       - mqtt.publish:
           topic: door
@@ -73,8 +76,6 @@ wifi:
   ap:
     ssid: "Hackem Fallback"
     password: !secret wifi_fallback_password
-
-captive_portal:
 
 sensor:
   - platform: wifi_signal
