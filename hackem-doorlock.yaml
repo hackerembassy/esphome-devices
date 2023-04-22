@@ -314,6 +314,7 @@ font:
 
 web_server:
   port: 80
+  local: true
   auth:
     username: admin
     password: !secret web_server_password
