@@ -95,6 +95,8 @@ binary_sensor:
         pullup: true
     name: "T-Display Button 0"
     id: tdisplay_button_input_0
+    on_double_click:
+      - button.press: restart_button
   - platform: gpio
     pin:
       number: GPIO35
@@ -194,6 +196,7 @@ switch:
 
 button:
   - platform: restart
+    id: restart_button
     name: Restart
 
 output:
