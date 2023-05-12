@@ -3,6 +3,14 @@ esphome:
   friendly_name: "Hackem Doorlock"
   board: featheresp32
   platform: esp32
+  on_shutdown:
+    priority: -200
+    then:
+      - display.page.show: page_reset
+      - component.update: my_display
+      - light.turn_off: 
+          id: backlight
+          transition_length: 0s
 
 # Enable logging
 logger:
@@ -12,13 +20,16 @@ globals:
     type: bool
     restore_value: no
     initial_value: "false"
+  - id: ota_progress
+    type: float
+    restore_value: no
   - id: mqtt_connected
     type: bool
     restore_value: no
     initial_value: "false"
     
 interval:
-  - interval: 1s
+  - interval: 500ms
     then:
       - if:
           condition:
@@ -68,6 +79,22 @@ api:
 
 ota:
   password: !secret ota_pass
+  on_progress:
+    then:
+      - lambda: |-
+          id(ota_progress) = x;
+      - component.update: my_display
+  on_begin:
+    then:
+      - display.page.show: page_ota
+      - component.update: my_display
+  on_end:
+    then:
+      - display.page.show: page_reset
+      - component.update: my_display
+  on_error:
+    then:
+      - script.execute: gui_reset
 
 wifi:
   ssid: !secret wifi_ssid
@@ -122,12 +149,15 @@ script:
       - light.turn_on:
           id: status_light
           effect: "Blink"
+      - display.page.show: page_not_ok
+      - component.update: my_display
       - while:
           condition:
             not:
               wifi.connected:
           then:
             - delay: 250ms
+      - component.update: my_display
 
   - id: status_wifi_connected
     then:
@@ -135,6 +165,8 @@ script:
       - light.turn_on:
           id: status_light
           effect: "Fast Pulse"
+      - display.page.show: page_not_ok
+      - component.update: my_display
       - while:
           condition:
             and:
@@ -143,6 +175,7 @@ script:
                   mqtt.connected:
           then:
             - delay: 250ms
+      - component.update: my_display
       - script.execute: status_ready
 
   - id: status_ready
@@ -150,23 +183,20 @@ script:
       - light.turn_on:
           id: status_light
           effect: "None"
+      - display.page.show: page_ok
+      - component.update: my_display
 
-  - id: door_opened
+  - id: gui_reset
     then:
-      # - light.turn_off:
-      #     id: status_light
-      #     transition_length: 0s
-      # - light.turn_on:
-      #     id: status_light
-      #     transition_length: 2s
-      #     brightness: 100%
-      - light.turn_on:
-          id: status_light
-          effect: "Blink faster"
-      - delay: 300ms
-      - light.turn_on:
-          id: status_light
-          effect: "None"
+      - if:
+          condition:
+            mqtt.connected:
+          then:
+            - light.turn_on:
+                id: status_light
+                effect: "None"
+            - display.page.show: page_ok
+            - component.update: my_display
       - if:
           condition:
             - script.is_running: status_wifi_connected
@@ -177,6 +207,23 @@ script:
             - script.is_running: status_no_connection
           then:
             - script.stop: status_no_connection
+
+  - id: door_opened
+    then:
+      # - light.turn_off:
+      #     id: status_light
+      #     transition_length: 0s
+      # - light.turn_on:
+      #     id: status_light
+      #     transition_length: 2s
+      #     brightness: 100%
+      - display.page.show: page_door
+      - component.update: my_display
+      - light.turn_on:
+          id: status_light
+          effect: "Blink faster"
+      - delay: 300ms
+      - script.execute: gui_reset
 
 switch:
   - platform: gpio
@@ -220,32 +267,60 @@ image:
 spi:
   clk_pin: GPIO18
   mosi_pin: GPIO19
+
+time:
+  - platform: sntp
+    timezone: "Asia/Yerevan"
+    id: sntp_time
+    servers:
+      - "minimi.lan"
+      - "0.pool.ntp.org"
+      - "1.pool.ntp.org"
   
 display:
   - platform: st7789v
+    id: my_display
     model: TTGO TDisplay 135x240
     cs_pin: GPIO5
     dc_pin: GPIO16
     reset_pin: GPIO23
     rotation: 270
     lambda: |-
-      //if (id(system_status).state) {
-      if (id(mqtt_connected)) {
-        it.image(0, 0, id(british_flag));
-        //it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
-      } else {
-        it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
-        it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
-        it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
+      it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Init...");
+    pages:
+      - id: page_ok
+        lambda: |-
+          it.image(0, 0, id(british_flag));
+      - id: page_not_ok
+        lambda: |-
+          it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
+          it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
+          it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
 
-        it.image(82, 34, id(error_icon));
-        it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
-        if (id(wifi_connected)) {
-            it.print(120, 115, id(roboto_12), id(my_green), TextAlign::TOP_CENTER, "Wi-Fi connected");
-        } else {
-            it.print(120, 115, id(roboto_12), id(my_red), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
-        }
-      }
+          it.image(82, 34, id(error_icon));
+          it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
+          if (id(wifi_connected)) {
+              it.print(120, 115, id(roboto_12), id(my_green), TextAlign::TOP_CENTER, "Wi-Fi connected");
+          } else {
+              it.print(120, 115, id(roboto_12), id(my_red), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
+          }
+      - id: page_reset
+        lambda: |-
+          it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Reset...");
+      - id: page_door
+        lambda: |-
+          it.print(120, 67, id(roboto_36), id(my_green), TextAlign::CENTER, "OPEN");
+      - id: page_time
+        lambda: |-
+          if (id(sntp_time).now().is_valid()) {
+            it.strftime(120, 67, id(roboto_36), id(my_gray), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
+          } else {
+            it.print(120, 67, id(roboto_12), id(my_white), TextAlign::CENTER, "Time not set");
+          }
+      - id: page_ota
+        lambda: |-
+          it.print(120, 60, id(roboto_36), id(my_white), TextAlign::CENTER, "OTA flashing");
+          it.printf(120, 85, id(roboto_36), id(my_white), TextAlign::CENTER, "%0.0f%%", id(ota_progress));
 
 light:
   - platform: monochromatic
@@ -309,11 +384,18 @@ color:
     red: 50%
     green: 50%
     blue: 50%
+  - id: my_white
+    red: 100%
+    green: 100%
+    blue: 100%
 
 font:
   - file: "gfonts://Roboto"
     id: roboto_12
     size: 12
+  - file: "gfonts://Roboto"
+    id: roboto_36
+    size: 36
 
 web_server:
   port: 80
