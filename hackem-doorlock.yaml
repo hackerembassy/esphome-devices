@@ -29,7 +29,7 @@ globals:
     initial_value: "false"
     
 interval:
-  - interval: 500ms
+  - interval: 1000ms
     then:
       - if:
           condition:
@@ -86,6 +86,10 @@ ota:
       - component.update: my_display
   on_begin:
     then:
+      - light.turn_on: 
+          id: backlight
+          brightness: 100%
+          transition_length: 0.5s
       - display.page.show: page_ota
       - component.update: my_display
   on_end:
@@ -151,6 +155,10 @@ script:
           effect: "Blink"
       - display.page.show: page_not_ok
       - component.update: my_display
+      - light.turn_on: 
+          id: backlight
+          brightness: 100%
+          transition_length: 0.5s
       - while:
           condition:
             not:
@@ -167,6 +175,10 @@ script:
           effect: "Fast Pulse"
       - display.page.show: page_not_ok
       - component.update: my_display
+      - light.turn_on: 
+          id: backlight
+          brightness: 100%
+          transition_length: 0.5s
       - while:
           condition:
             and:
@@ -176,6 +188,7 @@ script:
           then:
             - delay: 250ms
       - component.update: my_display
+      - delay: 250ms
       - script.execute: status_ready
 
   - id: status_ready
@@ -185,6 +198,10 @@ script:
           effect: "None"
       - display.page.show: page_ok
       - component.update: my_display
+      - light.turn_on: 
+          id: backlight
+          brightness: 50%
+          transition_length: 0.5s
 
   - id: gui_reset
     then:
@@ -197,6 +214,10 @@ script:
                 effect: "None"
             - display.page.show: page_ok
             - component.update: my_display
+            - light.turn_on: 
+                id: backlight
+                brightness: 50%
+                transition_length: 0.5s
       - if:
           condition:
             - script.is_running: status_wifi_connected
@@ -217,6 +238,10 @@ script:
       #     id: status_light
       #     transition_length: 2s
       #     brightness: 100%
+      - light.turn_on: 
+          id: backlight
+          brightness: 100%
+          transition_length: 0s
       - display.page.show: page_door
       - component.update: my_display
       - light.turn_on:
@@ -288,6 +313,20 @@ display:
     lambda: |-
       it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Init...");
     pages:
+      - id: page_okk
+        lambda: |-
+          it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
+          it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
+          it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
+
+          if (id(sntp_time).now().is_valid()) {
+            it.strftime(120, 75, id(roboto_48), id(my_white), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
+          } else {
+            it.print(120, 82, id(roboto_36), id(my_gray), TextAlign::CENTER, "Time not set");
+          }
+          
+          it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
+
       - id: page_ok
         lambda: |-
           it.image(0, 0, id(british_flag));
@@ -297,8 +336,13 @@ display:
           it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
           it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
 
-          it.image(82, 34, id(error_icon));
-          it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
+          if (id(mqtt_connected)) {
+              it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
+          } else {
+              it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
+              it.image(82, 34, id(error_icon));
+          }
+
           if (id(wifi_connected)) {
               it.print(120, 115, id(roboto_12), id(my_green), TextAlign::TOP_CENTER, "Wi-Fi connected");
           } else {
@@ -313,14 +357,14 @@ display:
       - id: page_time
         lambda: |-
           if (id(sntp_time).now().is_valid()) {
-            it.strftime(120, 67, id(roboto_36), id(my_gray), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
+            it.strftime(120, 75, id(roboto_48), id(my_gray), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
           } else {
-            it.print(120, 67, id(roboto_12), id(my_white), TextAlign::CENTER, "Time not set");
+            it.print(120, 86, id(roboto_36), id(my_white), TextAlign::CENTER, "Time not set");
           }
       - id: page_ota
         lambda: |-
           it.print(120, 60, id(roboto_36), id(my_white), TextAlign::CENTER, "OTA flashing");
-          it.printf(120, 85, id(roboto_36), id(my_white), TextAlign::CENTER, "%0.0f%%", id(ota_progress));
+          it.printf(120, 93, id(roboto_36), id(my_white), TextAlign::CENTER, "%0.0f%%", id(ota_progress));
 
 light:
   - platform: monochromatic
@@ -396,6 +440,9 @@ font:
   - file: "gfonts://Roboto"
     id: roboto_36
     size: 36
+  - file: "gfonts://Roboto"
+    id: roboto_48
+    size: 48
 
 web_server:
   port: 80
