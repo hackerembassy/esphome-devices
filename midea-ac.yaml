@@ -1,0 +1,95 @@
+esphome:
+  name: midea-ac
+  board: d1_mini
+  platform: esp8266
+
+api:
+  encryption:
+    key: !secret doorlock_apikey
+
+ota:
+  password: !secret ota_pass
+
+# remote_transmitter:
+#   pin:
+#     number: D8
+#     inverted: false
+#     mode:
+#       open_drain: false
+#       output: true
+#   carrier_duty_percent: 100%
+
+sensor:
+  - platform: homeassistant
+    id: temp_sensor
+    entity_id: sensor.first_floor_temperature
+
+# button:
+#   - platform: template
+#     name: "send follow me"
+#     on_press:
+#       - remote_transmitter.transmit_midea:
+#           code: !lambda |-
+#             // Send a FollowMe code with the current temperature.
+#             return {0xA4, 0x82, 0x48, 0x7F, (uint8_t)(id(temp_sensor).state + 1)};
+#   - platform: restart
+#     name: "Restart"
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "HackemLock Fallback Hotspot"
+    password: !secret wifi_fallback_password
+
+captive_portal:
+
+web_server:
+
+# Example configuration entry
+
+# Disable logging over UART (required)
+logger:
+  # baud_rate: 0
+
+# UART settings for Midea dongle (required)
+uart:
+  tx_pin: D1         # hardware dependant
+  rx_pin: D2         # hardware dependant
+  baud_rate: 9600
+  id: suart
+
+# Main settings
+climate:
+  - platform: midea
+    uart_id: suart
+    name: Midea Climate         # Use a unique name.
+    period: 1s                  # Optional
+    timeout: 1s                 # Optional
+    num_attempts: 3             # Optional
+    autoconf: true              # Autoconfigure most options.
+    beeper: false                # Beep on commands.
+    visual:                     # Optional. Example of visual settings override.
+      min_temperature: 16 °C    # min: 16
+      max_temperature: 30 °C    # max: 30
+      temperature_step: 0.5 °C  # min: 0.5
+    supported_modes:            # Optional. All capabilities in this section may be detected by autoconf.
+      - FAN_ONLY
+      - HEAT_COOL
+      - COOL
+      - HEAT
+      - DRY
+    custom_fan_modes:           # Optional
+      - SILENT
+      - TURBO
+    supported_presets:          # Optional. All capabilities in this section may be detected by autoconf.
+      - ECO
+      - BOOST
+      - SLEEP
+    custom_presets:             # Optional. All capabilities in this section may be detected by autoconf.
+      - FREEZE_PROTECTION
+    supported_swing_modes:      # Optional
+      - VERTICAL
+    outdoor_temperature:        # Optional. Outdoor temperature sensor (may display incorrect values after long inactivity).
+      name: Outdoor temp
