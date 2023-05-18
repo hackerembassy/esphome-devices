@@ -10,37 +10,49 @@ api:
 ota:
   password: !secret ota_pass
 
-# remote_transmitter:
-#   pin:
-#     number: D8
-#     inverted: false
-#     mode:
-#       open_drain: false
-#       output: true
-#   carrier_duty_percent: 100%
+remote_transmitter:
+  id: ir_led
+  pin:
+    number: D0
+    inverted: false
+    mode:
+      open_drain: false
+      output: true
+  carrier_duty_percent: 100%
 
 sensor:
   - platform: homeassistant
     id: temp_sensor
     entity_id: sensor.first_floor_temperature
+    filters:
+      - throttle: 10s
+      - heartbeat: 2min             # Maximum interval between updates.
+      - debounce: 1s
+    on_value:
+      midea_ac.follow_me:
+        temperature: !lambda "return x;"
+        beeper: true
 
-# button:
-#   - platform: template
-#     name: "send follow me"
-#     on_press:
-#       - remote_transmitter.transmit_midea:
-#           code: !lambda |-
-#             // Send a FollowMe code with the current temperature.
-#             return {0xA4, 0x82, 0x48, 0x7F, (uint8_t)(id(temp_sensor).state + 1)};
-#   - platform: restart
-#     name: "Restart"
+button:
+  - platform: template
+    name: "send follow me"
+    on_press:
+      - midea_ac.follow_me:
+          temperature: !lambda "return id(temp_sensor).state;"
+          beeper: false
+  - platform: template
+    name: "move step"
+    on_press:
+      - midea_ac.swing_step:
+  - platform: restart
+    name: "Restart"
 
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: "HackemLock Fallback Hotspot"
+    ssid: "MideaAC Fallback Hotspot"
     password: !secret wifi_fallback_password
 
 captive_portal:
@@ -64,6 +76,7 @@ uart:
 climate:
   - platform: midea
     uart_id: suart
+    transmitter_id: ir_led
     name: Midea Climate         # Use a unique name.
     period: 1s                  # Optional
     timeout: 1s                 # Optional
