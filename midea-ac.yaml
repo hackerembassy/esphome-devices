@@ -11,14 +11,10 @@ ota:
   password: !secret ota_pass
 
 remote_transmitter:
-  id: ir_led
   pin:
-    number: D0
-    inverted: false
-    mode:
-      open_drain: false
-      output: true
-  carrier_duty_percent: 100%
+    number: 16
+  carrier_duty_percent: 50%
+  id: irtx
 
 sensor:
   - platform: homeassistant
@@ -31,7 +27,7 @@ sensor:
     on_value:
       midea_ac.follow_me:
         temperature: !lambda "return x;"
-        beeper: true
+        beeper: false
 
 button:
   - platform: template
@@ -76,7 +72,7 @@ uart:
 climate:
   - platform: midea
     uart_id: suart
-    transmitter_id: ir_led
+    transmitter_id: irtx
     name: Midea Climate         # Use a unique name.
     period: 1s                  # Optional
     timeout: 1s                 # Optional
@@ -106,3 +102,5 @@ climate:
       - VERTICAL
     outdoor_temperature:        # Optional. Outdoor temperature sensor (may display incorrect values after long inactivity).
       name: Outdoor temp
+      filters:
+        - filter_out: 102
