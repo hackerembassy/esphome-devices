@@ -16,7 +16,28 @@ remote_transmitter:
   carrier_duty_percent: 50%
   id: irtx
 
+debug:
+  update_interval: 10s
+
+text_sensor:
+  - platform: debug
+    device:
+      name: "Device Info"
+    reset_reason:
+      name: "Reset Reason"
+
 sensor:
+  - platform: uptime
+    name: Uptime
+  - platform: debug
+    free:
+      name: "Heap Free"
+    fragmentation:
+      name: "Heap Fragmentation"
+    block:
+      name: "Heap Max Block"
+    loop_time:
+      name: "Loop Time"
   - platform: homeassistant
     id: temp_sensor
     entity_id: sensor.first_floor_temperature
