@@ -1,0 +1,43 @@
+esphome:
+  name: downstairs-co2
+  board: m5stack-atom
+  platform: esp32
+
+logger:
+
+api:
+  encryption:
+    key: !secret doorlock_apikey
+
+ota:
+  password: !secret ota_pass
+
+uart:
+  rx_pin: GPIO32
+  tx_pin: GPIO26
+  baud_rate: 9600
+
+sensor:
+  - platform: mhz19
+    co2:
+      name: "Downstairs CO2 Value"
+    temperature:
+      name: "MH-Z19 Temperature"
+    update_interval: 30s
+    automatic_baseline_calibration: false
+
+button:
+  - platform: restart
+    name: "Restart"
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "HackemDS_CO2 Fallback Hotspot"
+    password: !secret wifi_fallback_password
+
+captive_portal:
+
+web_server:
