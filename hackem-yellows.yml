@@ -1,0 +1,23 @@
+esphome:
+  name: hackem-yellows
+esp32:
+  board: esp32dev
+
+
+logger:
+api:
+  encryption:
+    key: !secret doorlock_apikey
+captive_portal:
+web_server:
+ota:
+  password: !secret ota_pass
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: Hackem Yellows Fallback Hotspot
+    password: !secret wifi_fallback_password
+
+
+# TODO
