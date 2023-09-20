@@ -19,5 +19,29 @@ wifi:
     ssid: Hackem Yellows Fallback Hotspot
     password: !secret wifi_fallback_password
 
+sensor:
+  - platform: adc
+    pin: GPIO35
+    name: dryness_y1
+    attenuation: 11db
+    update_interval: 10s
 
-# TODO
+output:
+  - platform: gpio
+    inverted: true
+    pin: GPIO18
+    id: relay_y1
+
+  - platform: gpio
+    inverted: true
+    pin: GPIO19
+    id: relay_y2
+
+switch:
+  - platform: output
+    name: relay_y1
+    output: relay_y1
+
+  - platform: output
+    name: relay_y2
+    output: relay_y2
