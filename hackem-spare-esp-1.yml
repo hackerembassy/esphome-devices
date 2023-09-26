@@ -1,5 +1,5 @@
 esphome:
-  name: hackem-reds
+  name: hackem-reds  # TODO: rename
 esp8266:
   board: nodemcuv2
 

@@ -1,5 +1,5 @@
 esphome:
-  name: hackem-yellows
+  name: hackem-yellows  # TODO: rename
 esp32:
   board: esp32dev
 
