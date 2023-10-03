@@ -41,7 +41,25 @@ switch:
   - platform: output
     name: relay_y1
     output: relay_y1
+    id: relay_y1_sw
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - logger.log: "Switch 1 Turned On"
+      - delay: 5s
+      - logger.log: "Switch 1 Turning Off automatically"
+      - switch.turn_off: relay_y1_sw 
+    on_turn_off:
+      - logger.log: "Switch 1 Turned Off" 
 
   - platform: output
     name: relay_y2
     output: relay_y2
+    id: relay_y2_sw
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - logger.log: "Switch 2 Turned On"
+      - delay: 5s
+      - logger.log: "Switch 2 Turning Off automatically"
+      - switch.turn_off: relay_y2_sw 
+    on_turn_off:
+      - logger.log: "Switch 2 Turned Off" 
