@@ -1,24 +1,40 @@
 esphome:
   name: downstairs-co2
+
+esp32:
   board: m5stack-atom
-  platform: esp32
+  framework:
+    type: esp-idf
 
 logger:
 
 api:
   encryption:
     key: !secret doorlock_apikey
+  services:
+    - service: mhz19_calibrate_zero
+      then:
+        - mhz19.calibrate_zero: meow
 
 ota:
   password: !secret ota_pass
 
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1100ms
+    window: 1100ms
+
+bluetooth_proxy:
+  active: true
+
 uart:
-  rx_pin: GPIO32
-  tx_pin: GPIO26
+  rx_pin: GPIO25
+  tx_pin: GPIO22
   baud_rate: 9600
 
 sensor:
   - platform: mhz19
+    id: meow
     co2:
       name: "Downstairs CO2 Value"
     temperature:
