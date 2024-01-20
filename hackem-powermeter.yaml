@@ -40,6 +40,10 @@ logger:
 button:
   - platform: restart
     name: Restart
+  - platform: template
+    name: "Cut off the power"
+    on_press:
+      - switch.turn_off: switch_relay
 
 sensor:
   - platform: bl0942
@@ -57,7 +61,7 @@ sensor:
     frequency:
       name: "BL0942 Frequency"
       accuracy_decimals: 2
-    update_interval: 10s
+    update_interval: 5s
 
 binary_sensor:
   - platform: gpio
@@ -124,6 +128,4 @@ switch:
     name: "Switch"
     output: 'bridge_relay'
     restore_mode: RESTORE_DEFAULT_ON
-
-
-web_server:
+    disabled_by_default: true
