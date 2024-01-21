@@ -110,17 +110,18 @@ output:
           condition:
             lambda: return (state == 1);
           then:
-            - light.turn_on: btn_led
+            - output.turn_on: led
             - output.turn_off: relay_off
             - output.turn_on: relay_on
-            - delay: 60ms
+            - delay: 80ms
             - output.turn_off: relay_on
+            - light.turn_on: btn_led
           else:
             - light.turn_off:
                 id: btn_led
             - output.turn_off: relay_on
             - output.turn_on: relay_off
-            - delay: 60ms
+            - delay: 80ms
             - output.turn_off: relay_off
             - light.turn_off: btn_led
             - light.turn_on:
