@@ -124,4 +124,4 @@ climate:
     outdoor_temperature:        # Optional. Outdoor temperature sensor (may display incorrect values after long inactivity).
       name: Outdoor temp
       filters:
-        - filter_out: 102.0
+        - filter_out: 102

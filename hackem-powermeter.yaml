@@ -110,17 +110,22 @@ output:
           condition:
             lambda: return (state == 1);
           then:
-            - output.turn_on: led
+            - light.turn_on: btn_led
             - output.turn_off: relay_off
             - output.turn_on: relay_on
             - delay: 60ms
             - output.turn_off: relay_on
           else:
-            - output.turn_off: led
+            - light.turn_off:
+                id: btn_led
             - output.turn_off: relay_on
             - output.turn_on: relay_off
             - delay: 60ms
             - output.turn_off: relay_off
+            - light.turn_off: btn_led
+            - light.turn_on:
+                id: btn_led
+                effect: "Blink"
 
 switch:
   - platform: output
@@ -129,3 +134,18 @@ switch:
     output: 'bridge_relay'
     restore_mode: RESTORE_DEFAULT_ON
     disabled_by_default: true
+
+light:
+  - platform: binary
+    name: "Button LED"
+    id: btn_led
+    output: led
+    internal: true
+    effects:
+      - strobe:
+          name: Blink
+          colors:
+            - state: true
+              duration: 200ms
+            - state: false
+              duration: 200ms
