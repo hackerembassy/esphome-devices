@@ -1,23 +1,14 @@
 esphome:
   name: downstairs-co2
+  friendly_name: downstairs-co2
 
 esp32:
-  board: m5stack-atom
+  board: esp32-c3-devkitm-1
   framework:
-    type: esp-idf
+    type: arduino
 
+# Enable logging
 logger:
-
-api:
-  encryption:
-    key: !secret doorlock_apikey
-  services:
-    - service: mhz19_calibrate_zero
-      then:
-        - mhz19.calibrate_zero: meow
-
-ota:
-  password: !secret ota_pass
 
 esp32_ble_tracker:
   scan_parameters:
@@ -28,8 +19,8 @@ bluetooth_proxy:
   active: true
 
 uart:
-  rx_pin: GPIO25
-  tx_pin: GPIO22
+  rx_pin: GPIO4
+  tx_pin: GPIO5
   baud_rate: 9600
 
 sensor:
@@ -46,14 +37,27 @@ button:
   - platform: restart
     name: "Restart"
 
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret doorlock_apikey
+  services:
+    - service: mhz19_calibrate_zero
+      then:
+        - mhz19.calibrate_zero: meow
+
+ota:
+  password: !secret ota_pass
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  power_save_mode: none
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "HackemDS_CO2 Fallback Hotspot"
+    ssid: "Downstairs-Co2 Fallback Hotspot"
     password: !secret wifi_fallback_password
 
 captive_portal:
-
-web_server:
+    
