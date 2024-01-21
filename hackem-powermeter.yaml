@@ -115,7 +115,7 @@ output:
             - output.turn_on: relay_on
             - delay: 80ms
             - output.turn_off: relay_on
-            - light.turn_on: btn_led
+            - light.turn_on:
                 id: btn_led
                 effect: "None"
           else:
