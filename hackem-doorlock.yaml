@@ -309,6 +309,7 @@ display:
     cs_pin: GPIO5
     dc_pin: GPIO16
     reset_pin: GPIO23
+    backlight_pin: no
     rotation: 270
     lambda: |-
       it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Init...");
