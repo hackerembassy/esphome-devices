@@ -21,7 +21,7 @@ globals:
     initial_value: "false"
     
 interval:
-  - interval: 1000ms
+  - interval: 3000ms
     then:
       - if:
           condition:
@@ -175,9 +175,9 @@ script:
               - not:
                   mqtt.connected:
           then:
-            - delay: 250ms
+            - delay: 5000ms
       - component.update: my_display
-      - delay: 250ms
+      - delay: 500ms
       - script.execute: status_ready
 
   - id: status_ready
@@ -186,10 +186,11 @@ script:
           id: status_light
           effect: "None"
       - display.page.show: page_ok
-      - component.update: my_display
+      # - component.update: my_display
 
   - id: gui_reset
     then:
+      - logger.log: "GUI reset"
       - if:
           condition:
             mqtt.connected:
@@ -221,11 +222,11 @@ script:
       #     brightness: 100%
       # - display.page.show: page_door
       # - component.update: my_display
-      - light.turn_on:
-          id: status_light
-          effect: "Blink faster"
-      - delay: 300ms
-      - script.execute: gui_reset
+      # - light.turn_on:
+      #     id: status_light
+      #     effect: "Blink faster"
+      # - delay: 300ms
+      # - script.execute: gui_reset
 
 switch:
   - platform: gpio
@@ -287,8 +288,8 @@ display:
     id: my_display
     model: 2.13in-ttgo-dke
     # model: 2.13inv2
-    full_update_every: 1
-    # update_interval: 60s
+    full_update_every: 5
+    update_interval: never
     rotation: 90°
     pages:
       - id: no_time
