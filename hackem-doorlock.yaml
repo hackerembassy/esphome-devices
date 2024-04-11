@@ -307,7 +307,7 @@ display:
 
       - id: page_ok
         lambda: |-
-          it.image(82, 34, id(britishflag));
+          it.image(0, 0, id(britishflag));
       - id: page_not_ok
         lambda: |-
           it.rectangle(0,  0, it.get_width(), it.get_height());
@@ -318,8 +318,8 @@ display:
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Online");
           } else {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Offline");
-              // it.image(82, 34, id(error_icon));
-              it.printf(125, 65, id(clockfont), TextAlign::CENTER, "NOT OK");
+              it.image(125, 61, id(error_icon));
+              // it.printf(125, 65, id(clockfont), TextAlign::CENTER, "NOT OK");
           }
 
           if (id(wifi_connected)) {
