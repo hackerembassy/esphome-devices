@@ -175,7 +175,7 @@ script:
               - not:
                   mqtt.connected:
           then:
-            - delay: 5000ms
+            - delay: 100ms
       - component.update: my_display
       - delay: 500ms
       - script.execute: status_ready
@@ -186,7 +186,7 @@ script:
           id: status_light
           effect: "None"
       - display.page.show: page_ok
-      # - component.update: my_display
+      - component.update: my_display
 
   - id: gui_reset
     then:
@@ -254,11 +254,16 @@ output:
     id: output_status
     pin: GPIO18
     
-# image:
-#   - file: "doorlock/flag.png"
-#     id: british_flag
-#     resize: 240x135
-#     type: RGB24
+image:
+  # - file: "doorlock/flag.png"
+  #   id: britishflag
+  #   resize: 240x135
+  #   type: RGB24
+  - file: "doorlock/bwflag.png"
+    id: britishflag
+    resize: 240x135
+    type: BINARY
+    dither: FLOYDSTEINBERG
 #   - file: "doorlock/error.png"
 #     id: error_icon
 #     resize: 100x100
@@ -302,7 +307,7 @@ display:
 
       - id: page_ok
         lambda: |-
-          it.printf(125, 65, id(clockfont), TextAlign::CENTER, "OK");
+          it.image(82, 34, id(britishflag));
       - id: page_not_ok
         lambda: |-
           it.rectangle(0,  0, it.get_width(), it.get_height());
