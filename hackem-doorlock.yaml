@@ -293,7 +293,7 @@ display:
     pages:
       - id: no_time
         lambda: |-
-          it.printf(125, 65, id(clockfont), TextAlign::CENTER, "--:--");
+          it.printf(125, 65, id(clockfont), TextAlign::CENTER, "init");
 
       - id: has_time
         lambda: |-
