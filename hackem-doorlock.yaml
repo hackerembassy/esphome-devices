@@ -3,14 +3,6 @@ esphome:
   friendly_name: "Hackem Doorlock"
   board: featheresp32
   platform: esp32
-  on_shutdown:
-    priority: -200
-    then:
-      - display.page.show: page_reset
-      - component.update: my_display
-      - light.turn_off: 
-          id: backlight
-          transition_length: 0s
 
 # Enable logging
 logger:
@@ -83,19 +75,15 @@ ota:
     then:
       - lambda: |-
           id(ota_progress) = x;
-      - component.update: my_display
+      # - component.update: my_display
   on_begin:
     then:
-      - light.turn_on: 
-          id: backlight
-          brightness: 100%
-          transition_length: 0.5s
-      - display.page.show: page_ota
-      - component.update: my_display
+      # - display.page.show: page_ota
+      # - component.update: my_display
   on_end:
     then:
-      - display.page.show: page_reset
-      - component.update: my_display
+      # - display.page.show: page_reset
+      # - component.update: my_display
   on_error:
     then:
       - script.execute: gui_reset
@@ -117,29 +105,38 @@ binary_sensor:
   - platform: status
     name: "Node Status"
     id: system_status
+  # - platform: gpio
+  #   pin:
+  #     number: GPIO0
+  #     inverted: true
+  #     mode:
+  #       input: true
+  #       pullup: true
+  #   name: "T-Display Button 0"
+  #   id: tdisplay_button_input_0
+  #   on_double_click:
+  #     - button.press: restart_button
+  # - platform: gpio
+  #   pin:
+  #     number: GPIO35
+  #     inverted: true
+  #   name: "T-Display Button 1"
+  #   id: tdisplay_button_input_1
+  #   on_click:
+  #     - switch.turn_on: relay
   - platform: gpio
+    name: Doorbell Button
     pin:
-      number: GPIO0
-      inverted: true
+      number: GPIO16
       mode:
         input: true
-        pullup: true
-    name: "T-Display Button 0"
-    id: tdisplay_button_input_0
-    on_double_click:
-      - button.press: restart_button
-  - platform: gpio
-    pin:
-      number: GPIO35
-      inverted: true
-    name: "T-Display Button 1"
-    id: tdisplay_button_input_1
-    on_click:
-      - switch.turn_on: relay
+        pulldown: true
+    filters:
+      - delayed_off: 10s
   - platform: gpio
     name: Unlock Button
     pin:
-      number: GPIO26
+      number: GPIO17
       mode:
         input: true
         pulldown: true
@@ -155,10 +152,6 @@ script:
           effect: "Blink"
       - display.page.show: page_not_ok
       - component.update: my_display
-      - light.turn_on: 
-          id: backlight
-          brightness: 100%
-          transition_length: 0.5s
       - while:
           condition:
             not:
@@ -175,10 +168,6 @@ script:
           effect: "Fast Pulse"
       - display.page.show: page_not_ok
       - component.update: my_display
-      - light.turn_on: 
-          id: backlight
-          brightness: 100%
-          transition_length: 0.5s
       - while:
           condition:
             and:
@@ -198,10 +187,6 @@ script:
           effect: "None"
       - display.page.show: page_ok
       - component.update: my_display
-      - light.turn_on: 
-          id: backlight
-          brightness: 50%
-          transition_length: 0.5s
 
   - id: gui_reset
     then:
@@ -214,10 +199,6 @@ script:
                 effect: "None"
             - display.page.show: page_ok
             - component.update: my_display
-            - light.turn_on: 
-                id: backlight
-                brightness: 50%
-                transition_length: 0.5s
       - if:
           condition:
             - script.is_running: status_wifi_connected
@@ -238,12 +219,8 @@ script:
       #     id: status_light
       #     transition_length: 2s
       #     brightness: 100%
-      - light.turn_on: 
-          id: backlight
-          brightness: 100%
-          transition_length: 0s
-      - display.page.show: page_door
-      - component.update: my_display
+      # - display.page.show: page_door
+      # - component.update: my_display
       - light.turn_on:
           id: status_light
           effect: "Blink faster"
@@ -256,13 +233,13 @@ switch:
     restore_mode: ALWAYS_OFF
     id: relay
     pin:
-      number: GPIO27
+      number: GPIO5
       inverted: false
       mode:
         open_drain: false
         output: true
     on_turn_on:
-      - script.execute: door_opened
+      # - script.execute: door_opened
       - delay: 200ms
       - switch.turn_off: relay
 
@@ -274,24 +251,21 @@ button:
 output:
   - platform: ledc
     id: output_status
-    pin: GPIO25
-  - platform: ledc
-    id: backlight_led
-    pin: GPIO4
+    pin: GPIO18
     
-image:
-  - file: "doorlock/flag.png"
-    id: british_flag
-    resize: 240x135
-    type: RGB24
-  - file: "doorlock/error.png"
-    id: error_icon
-    resize: 100x100
-    type: RGB24
+# image:
+#   - file: "doorlock/flag.png"
+#     id: british_flag
+#     resize: 240x135
+#     type: RGB24
+#   - file: "doorlock/error.png"
+#     id: error_icon
+#     resize: 100x100
+#     type: RGB24
 
 spi:
-  clk_pin: GPIO18
-  mosi_pin: GPIO19
+  clk_pin: 13
+  mosi_pin: 14
 
 time:
   - platform: sntp
@@ -301,78 +275,55 @@ time:
       - "minimi.lan"
       - "0.pool.ntp.org"
       - "1.pool.ntp.org"
-  
-display:
-  - platform: st7789v
-    id: my_display
-    model: TTGO TDisplay 135x240
-    cs_pin: GPIO5
-    dc_pin: GPIO16
-    reset_pin: GPIO23
-    backlight_pin: no
-    rotation: 270
-    lambda: |-
-      it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Init...");
-    pages:
-      - id: page_okk
-        lambda: |-
-          it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
-          it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
-          it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
 
-          if (id(sntp_time).now().is_valid()) {
-            it.strftime(120, 75, id(roboto_48), id(my_white), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
-          } else {
-            it.print(120, 82, id(roboto_36), id(my_gray), TextAlign::CENTER, "Time not set");
-          }
-          
-          it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
+
+display:
+  - platform: waveshare_epaper
+    cs_pin: 15
+    dc_pin: 27
+    reset_duration: 5ms
+    busy_pin: 25
+    reset_pin: 26
+    id: my_display
+    model: 2.13in-ttgo-dke
+    # model: 2.13inv2
+    full_update_every: 1
+    # update_interval: 60s
+    rotation: 90°
+    pages:
+      - id: no_time
+        lambda: |-
+          it.printf(125, 65, id(clockfont), TextAlign::CENTER, "--:--");
+
+      - id: has_time
+        lambda: |-
+          it.strftime(125, 65, id(clockfont), TextAlign::CENTER, "%H:%M", id(sntp_time).now());
 
       - id: page_ok
         lambda: |-
-          it.image(0, 0, id(british_flag));
+          it.printf(125, 65, id(clockfont), TextAlign::CENTER, "OK");
       - id: page_not_ok
         lambda: |-
-          it.rectangle(0,  0, it.get_width(), it.get_height(), id(my_gray));
-          it.rectangle(0, 20, it.get_width(), it.get_height(), id(my_gray));   // header bar
-          it.print(5, 5, id(roboto_12), id(my_yellow), TextAlign::TOP_LEFT, "Hacker Embassy");
+          it.rectangle(0,  0, it.get_width(), it.get_height());
+          it.rectangle(0, 20, it.get_width(), it.get_height());   // header bar
+          it.print(5, 5, id(roboto_12), TextAlign::TOP_LEFT, "Hacker Embassy");
 
           if (id(mqtt_connected)) {
-              it.print(235, 5, id(roboto_12), id(my_green), TextAlign::TOP_RIGHT, "Online");
+              it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Online");
           } else {
-              it.print(235, 5, id(roboto_12), id(my_red), TextAlign::TOP_RIGHT, "Offline");
-              it.image(82, 34, id(error_icon));
+              it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Offline");
+              // it.image(82, 34, id(error_icon));
+              it.printf(125, 65, id(clockfont), TextAlign::CENTER, "NOT OK");
           }
 
           if (id(wifi_connected)) {
-              it.print(120, 115, id(roboto_12), id(my_green), TextAlign::TOP_CENTER, "Wi-Fi connected");
+              it.print(120, 115, id(roboto_12), TextAlign::TOP_CENTER, "Wi-Fi connected");
           } else {
-              it.print(120, 115, id(roboto_12), id(my_red), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
+              it.print(120, 115, id(roboto_12), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
           }
-      - id: page_reset
-        lambda: |-
-          it.print(120, 67, id(roboto_36), id(my_white), TextAlign::CENTER, "Reset...");
-      - id: page_door
-        lambda: |-
-          it.print(120, 67, id(roboto_36), id(my_green), TextAlign::CENTER, "OPEN");
-      - id: page_time
-        lambda: |-
-          if (id(sntp_time).now().is_valid()) {
-            it.strftime(120, 75, id(roboto_48), id(my_gray), TextAlign::CENTER, "%H:%M:%S", id(sntp_time).now());
-          } else {
-            it.print(120, 86, id(roboto_36), id(my_white), TextAlign::CENTER, "Time not set");
-          }
-      - id: page_ota
-        lambda: |-
-          it.print(120, 60, id(roboto_36), id(my_white), TextAlign::CENTER, "OTA flashing");
-          it.printf(120, 93, id(roboto_36), id(my_white), TextAlign::CENTER, "%0.0f%%", id(ota_progress));
+  
 
 light:
-  - platform: monochromatic
-    name: "LCD Backlight"
-    restore_mode: ALWAYS_ON
-    id: backlight
-    output: backlight_led
   - platform: monochromatic
     name: "Status Light"
     id: status_light
@@ -408,33 +359,10 @@ light:
             - state: false
               duration: 50ms
 
-color:
-  - id: my_red
-    red: 100%
-    green: 0%
-    blue: 0%
-  - id: my_yellow
-    red: 100%
-    green: 100%
-    blue: 0%
-  - id: my_green
-    red: 0%
-    green: 100%
-    blue: 0%
-  - id: my_blue
-    red: 0%
-    green: 0%
-    blue: 100%
-  - id: my_gray
-    red: 50%
-    green: 50%
-    blue: 50%
-  - id: my_white
-    red: 100%
-    green: 100%
-    blue: 100%
-
 font:
+  - file: "gfonts://Anton"
+    id: clockfont
+    size: 96
   - file: "gfonts://Roboto"
     id: roboto_12
     size: 12
