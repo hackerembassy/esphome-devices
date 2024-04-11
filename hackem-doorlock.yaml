@@ -261,13 +261,14 @@ image:
   #   type: RGB24
   - file: "doorlock/bwflag.png"
     id: britishflag
-    resize: 240x135
+    # resize: 240x135
     type: BINARY
     dither: FLOYDSTEINBERG
   - file: "doorlock/error.png"
     id: error_icon
     resize: 100x100
-    type: RGB24
+    type: TRANSPARENT_BINARY
+    dither: FLOYDSTEINBERG
 
 spi:
   clk_pin: 13
@@ -318,7 +319,7 @@ display:
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Online");
           } else {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Offline");
-              it.image(125, 61, id(error_icon));
+              it.image(75, 25, id(error_icon));
               // it.printf(125, 65, id(clockfont), TextAlign::CENTER, "NOT OK");
           }
 
