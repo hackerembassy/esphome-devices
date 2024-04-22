@@ -1,6 +1,18 @@
 esphome:
   name: "toilet"
   friendly_name: "toilet"
+  on_boot:
+    then:
+      - wait_until:
+          condition:
+            wifi.connected:
+      - if:
+          condition:
+            binary_sensor.is_off: door_lock
+          then: 
+            - script.execute: locked
+          else: 
+            - script.execute: unlocked
 
 esp32:
   board: m5stack-atom
@@ -99,70 +111,42 @@ binary_sensor:
       - delayed_off: 0.2s
     on_press:
       then:
-        - light.turn_on:
-           id: alice_led
-           effect: "Pulse"
-           red: 90%
-           blue: 100%
-           green: 100%
-           brightness: 30%
-        - light.turn_on:
-            id: external_led
-            red: 0%
-            green: 100%
-            blue: 0%
-            brightness: 30%
+        - script.execute: locked
     on_release:
       then:
-        - light.turn_on:
-            id: external_led
-            red: 100%
-            green: 0%
-            blue: 0%
-            brightness: 50%
-        - light.turn_on:
-           id: alice_led
-           effect: "Pulse"
-           red: 90%
-           blue: 0%
-           green: 80%
-           brightness: 50%
+        - script.execute: unlocked
     
   
-  # - platform: template
-  #   device_class: occupancy
-  #   name: Occupied
-  #   id: occupied
-  #   on_press:
-  #     then:
-  #       - light.turn_on:
-  #           id: external_led
-  #           red: 100%
-  #           green: 0%
-  #           blue: 0%
-  #           brightness: 50%
-  #       - light.turn_on:
-  #          id: alice_led
-  #          effect: "Pulse"
-  #          red: 90%
-  #          blue: 0%
-  #          green: 80%
-  #          brightness: 50%
-  #   on_release:
-  #     then:
-  #       - light.turn_on:
-  #          id: alice_led
-  #          effect: "Pulse"
-  #          red: 90%
-  #          blue: 100%
-  #          green: 100%
-  #          brightness: 50%
-  #       - light.turn_on:
-  #           id: external_led
-  #           red: 0%
-  #           green: 100%
-  #           blue: 0%
-  #           brightness: 30%
+script:
+  - id: unlocked
+    then:
+    - light.turn_on:
+        id: alice_led
+        effect: "Pulse"
+        red: 90%
+        blue: 100%
+        green: 100%
+        brightness: 30%
+    - light.turn_on:
+        id: external_led
+        effect: None
+        red: 0%
+        green: 100%
+        blue: 0%
+        brightness: 30%
+  - id: locked
+    then:
+    - light.turn_on:
+        id: external_led
+        effect: "Locked Effect"
+        brightness: 50%
+    - light.turn_on:
+        id: alice_led
+        effect: "Pulse"
+        red: 90%
+        blue: 0%
+        green: 80%
+        brightness: 50%
 
 light:
   - platform: esp32_rmt_led_strip
@@ -196,7 +180,7 @@ light:
         to: 7
     effects:
       - addressable_color_wipe:
-          name: Green Scroll
+          name: Green Wipe
           colors:
             - red: 0%
               green: 100%
@@ -209,16 +193,35 @@ light:
           add_led_interval: 100ms
           reverse: false
       - addressable_color_wipe:
-          name: Red Scroll
+          name: Red Wipe
           colors:
             - red: 100%
               green: 0%
               blue: 0%
-              num_leds: 1
-            - red: 0%
-              green: 0%
+              num_leds: 2
+              gradient: true
+            - red: 50%
+              green: 30%
               blue: 0%
-              num_leds: 1
+              num_leds: 2
+              gradient: true
           add_led_interval: 100ms
           reverse: false
-    
+      - automation:
+            name: Locked Effect
+            sequence:
+            - light.addressable_set:
+                id: external_led
+                red: 100%
+                green: 0%
+                blue: 0%
+            - delay: 250ms
+            - light.addressable_set:
+                id: external_led
+                range_from: 0
+                range_to: 0
+                red: 0%
+                green: 0%
+                blue: 0%
+            - delay: 250ms
+        
