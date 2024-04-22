@@ -111,10 +111,10 @@ binary_sensor:
       - delayed_off: 0.2s
     on_press:
       then:
-        - script.execute: locked
+        - script.execute: unlocked
     on_release:
       then:
-        - script.execute: unlocked
+        - script.execute: locked
     
   
 script:
