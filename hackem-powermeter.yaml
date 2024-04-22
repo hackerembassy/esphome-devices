@@ -54,14 +54,19 @@ sensor:
       name: 'BL0942 Current'
     power:
       name: 'BL0942 Power'
+      id: my_power
       filters:
         multiply: -1
     energy:
       name: 'BL0942 Energy'
+      accuracy_decimals: 2
     frequency:
       name: "BL0942 Frequency"
       accuracy_decimals: 2
     update_interval: 5s
+
+time:
+  - platform: homeassistant
 
 binary_sensor:
   - platform: gpio
