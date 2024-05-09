@@ -54,6 +54,9 @@ media_player:
     name: None
     dac_type: external
     i2s_dout_pin: GPIO25
+    mute_pin: 
+      number: GPIO23
+      inverted: true
     mode: mono
 
 binary_sensor:
@@ -153,7 +156,7 @@ light:
     rmt_channel: 0
     id: leds
     name: LED chain
-    pin: GPIO23
+    pin: GPIO26
     chipset: WS2812
     num_leds: 8
     rgb_order: grb

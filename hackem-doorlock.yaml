@@ -41,7 +41,7 @@ interval:
             - script.execute: status_no_connection
 
 mqtt:
-  broker: 192.168.1.1
+  broker: 192.168.1.5
   username: door
   password: !secret mqtt_password
   on_connect:
