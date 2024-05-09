@@ -21,6 +21,9 @@ globals:
     initial_value: "false"
     
 interval:
+  - interval: 1h
+    then:
+      - component.update: my_display
   - interval: 3000ms
     then:
       - if:

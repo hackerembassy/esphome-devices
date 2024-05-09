@@ -60,28 +60,6 @@ media_player:
     mode: mono
 
 binary_sensor:
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO33
-  #     mode:
-  #       input: true
-  #       pulldown: true
-  #   name: Motion sensor
-  #   id: motion
-  #   device_class: motion
-  #   filters:
-  #     - delayed_on: 3s
-  #     - delayed_off: 2s
-  #   on_press:
-  #     then:
-  #       - if:
-  #           condition:
-  #             - binary_sensor.is_off: door
-  #           then:
-  #             - binary_sensor.template.publish:
-  #                 id: occupied
-  #                 state: true
-
   - platform: gpio
     pin:
       number: GPIO19
