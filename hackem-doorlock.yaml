@@ -283,8 +283,8 @@ time:
     id: sntp_time
     servers:
       - "minimi.lan"
-      - "0.pool.ntp.org"
-      - "1.pool.ntp.org"
+      # - "0.pool.ntp.org"
+      # - "1.pool.ntp.org"
 
 
 display:

@@ -21,7 +21,7 @@ esp32:
 
 # Enable logging
 logger:
-  level: debug
+  level: info
 
 api:
   encryption:
