@@ -103,7 +103,7 @@ climate:
     visual:                     # Optional. Example of visual settings override.
       min_temperature: 16 °C    # min: 16
       max_temperature: 30 °C    # max: 30
-      temperature_step: 0.5 °C  # min: 0.5
+      temperature_step: 1 °C  # min: 0.5
     supported_modes:            # Optional. All capabilities in this section may be detected by autoconf.
       - FAN_ONLY
       - HEAT_COOL
