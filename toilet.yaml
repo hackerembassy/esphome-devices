@@ -8,7 +8,7 @@ esphome:
             wifi.connected:
       - if:
           condition:
-            binary_sensor.is_on: presense_binary
+            binary_sensor.is_on: presense
           then: 
             - script.execute: locked
           else: 
@@ -73,23 +73,18 @@ binary_sensor:
 #       name: Still Target
 #     out_pin_presence_status:
 #       name: out pin presence status
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO19
-  #     mode:
-  #       input: true
-  #       pullup: true
-  #   id: door
-  #   name: Door
-  #   device_class: door
-  #   filters:
-  #     - delayed_on: 0.2s
-  #     - delayed_off: 0.2s
-  #   # on_press:
-  #   #   then:
-  #   #     - binary_sensor.template.publish:
-  #   #         id: occupied
-  #   #         state: false
+  - platform: gpio
+    pin:
+      number: GPIO19
+      mode:
+        input: true
+        pullup: true
+    id: door
+    name: Door
+    device_class: door
+    filters:
+      - delayed_on: 0.2s
+      - delayed_off: 0.2s
 
   - platform: gpio
     pin:
@@ -97,25 +92,25 @@ binary_sensor:
       mode:
         input: true
         pullup: false
-    id: presense_binary
+    id: presense
     name: Presence (binary)
     filters:
       - delayed_on: 0.2s
       - delayed_off: 0.2s
 
 
-  - platform: gpio
-    pin:
-      number: GPIO33
-      mode:
-        input: true
-        pullup: false
-    id: door_lock
-    name: Door lock
-    device_class: lock
-    filters:
-      - delayed_on: 0.2s
-      - delayed_off: 0.2s
+  # - platform: gpio
+  #   pin:
+  #     number: GPIO33
+  #     mode:
+  #       input: true
+  #       pullup: false
+  #   id: door_lock
+  #   name: Door lock
+  #   device_class: lock
+  #   filters:
+  #     - delayed_on: 0.2s
+  #     - delayed_off: 0.2s
   #   on_press:
   #     then:
   #       - script.execute: unlocked
