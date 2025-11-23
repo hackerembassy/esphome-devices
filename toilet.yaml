@@ -17,11 +17,13 @@ esphome:
 esp32:
   board: m5stack-atom
   framework:
-    type: arduino
+    #type: arduino
+    type: esp-idf
+    
 
 # Enable logging
-logger:
-  level: info
+# logger:
+#   level: info
 
 api:
   encryption:
@@ -38,7 +40,7 @@ wifi:
     ssid: "Hackem-Speaker Fallback Hotspot"
     password: !secret wifi_fallback_password
 
-captive_portal:
+# captive_portal:
 
 i2s_audio:
   - i2s_lrclk_pin: GPIO21
@@ -264,6 +266,7 @@ text_sensor:
 script:
   - id: unlocked
     then:
+    - delay: 0s
     - light.turn_on:
         id: alice_led
         effect: "Pulse"
@@ -280,6 +283,7 @@ script:
         brightness: 30%
   - id: locked
     then:
+    - delay: 0s
     - light.turn_on:
         id: external_led
         effect: "Locked Effect"
@@ -293,6 +297,7 @@ script:
         brightness: 50%
   - id: maintenance
     then:
+    - delay: 0s
     - light.turn_on:
         id: external_led
         effect: "Maintenance"
@@ -306,8 +311,7 @@ script:
         brightness: 50%
 
 light:
-  - platform: esp32_rmt_led_strip
-    rmt_channel: 0
+  - platform: fastled_clockless
     id: leds
     name: LED chain
     pin: GPIO33
