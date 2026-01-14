@@ -13,7 +13,7 @@ esphome:
 esp32:
   board: esp32-c3-devkitm-1
   framework:
-    type: arduino
+    type: esp-idf
 
 # Enable logging
 logger:
@@ -27,7 +27,7 @@ esp32_ble_tracker:
     active: false
 
 bluetooth_proxy:
-  active: true
+  active: false
 
 uart:
   rx_pin: GPIO4
@@ -58,6 +58,7 @@ api:
         - mhz19.calibrate_zero: meow
 
 ota:
+  platform: esphome
   password: !secret ota_pass
 
 wifi:
@@ -69,5 +70,5 @@ wifi:
     ssid: "Downstairs-Co2 Fallback Hotspot"
     password: !secret wifi_fallback_password
 
-captive_portal:
+# captive_portal:
     

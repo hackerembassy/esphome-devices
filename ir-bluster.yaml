@@ -1,10 +1,9 @@
 esphome:
-  name: lg-hvac
+  name: ir-bluster
+  friendly_name: ir-bluster
 
-esp32:
-  board: lolin_s2_mini
-  framework:
-    type: arduino
+bk72xx:
+  board: wb3s
 
 # Enable logging
 logger:
@@ -15,13 +14,32 @@ api:
     key: !secret doorlock_apikey
 
 ota:
+  platform: esphome
   password: !secret ota_pass
 
 remote_transmitter:
   pin:
-    number: 16
+    number: P26
   carrier_duty_percent: 50%
   id: irtx
+
+# Example configuration entry
+status_led:
+  pin: P9
+
+# Example configuration entry
+remote_receiver:
+  # pin: P8
+  pin:
+    number: P8
+    inverted: true
+    mode:
+      input: true
+      pullup: true
+  # high 55% tolerance is recommended for some remote control units
+  tolerance: 55%
+  dump: all
+  id: irrx
 
 sensor:
   - platform: homeassistant
@@ -41,12 +59,13 @@ wifi:
     ssid: "LG-HVAC Fallback Hotspot"
     password: !secret wifi_fallback_password
 
-captive_portal:
 
 climate:
   - platform: climate_ir_lg
-    name: "Upstairs HVAC"
+    name: "LG HVAC"
+    receiver_id: irrx
+    transmitter_id: irtx
     sensor: temp_sensor
-    header_high: 3265us
-    header_low: 9856us
+    # header_high: 3265us
+    # header_low: 9856us
     

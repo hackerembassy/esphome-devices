@@ -1,0 +1,64 @@
+esphome:
+  name: hack-a-candy
+  friendly_name: hack-a-candy
+
+esp8266:
+  board: esp01_1m
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO2
+    id: led
+
+light:
+  - platform: monochromatic
+    name: "Hack-A-Candy Backlight"
+    id: hackacandy_backlight
+    output: led
+    effects:
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.25s
+          update_interval: 0.25s
+          min_brightness: 0%
+          max_brightness: 100%
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 3s
+          update_interval: 3s
+      - pulse:
+          name: "Asymmetrical Pulse"
+          transition_length:
+            on_length: 1s
+            off_length: 500ms
+          update_interval: 1.5s
+          
+          
+#switch:
+#  - platform: gpio
+#    pin: GPIO2
+#    id: hackacandy_backlight
+#    name: "Hack-A-Candy Backlight"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_key_candy
+
+ota:
+  - platform: esphome
+    password: !secret ota_pass_candy
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Hack-A-Candy Fallback Hotspot"
+    password: !secret wifi_fallback_password
+captive_portal:
+    

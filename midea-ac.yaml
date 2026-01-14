@@ -1,13 +1,15 @@
 esphome:
   name: midea-ac
+
+esp8266:
   board: d1_mini
-  platform: esp8266
 
 api:
   encryption:
     key: !secret doorlock_apikey
 
 ota:
+  platform: esphome
   password: !secret ota_pass
 
 remote_transmitter:
@@ -40,7 +42,7 @@ sensor:
       name: "Loop Time"
   - platform: homeassistant
     id: temp_sensor
-    entity_id: sensor.first_floor_temperature
+    entity_id: sensor.atc_private_room_temperature
     filters:
       - throttle: 10s
       - heartbeat: 2min             # Maximum interval between updates.
@@ -58,6 +60,10 @@ button:
           temperature: !lambda "return id(temp_sensor).state;"
           beeper: false
   - platform: template
+    name: "Display Toggle"
+    on_press:
+      - midea_ac.display_toggle
+  - platform: template
     name: "move step"
     on_press:
       - midea_ac.swing_step:
@@ -72,9 +78,9 @@ wifi:
     ssid: "MideaAC Fallback Hotspot"
     password: !secret wifi_fallback_password
 
-captive_portal:
+# captive_portal:
 
-web_server:
+# web_server:
 
 # Example configuration entry
 
@@ -124,4 +130,8 @@ climate:
     outdoor_temperature:        # Optional. Outdoor temperature sensor (may display incorrect values after long inactivity).
       name: Outdoor temp
       filters:
-        - filter_out: 102
+        - filter_out: 103
+    power_usage:                # Optional. Power usage sensor (only for devices that support this feature).
+      name: Power
+    humidity_setpoint:          # Optional. Indoor humidity sensor (only for devices that support this feature).
+      name: Humidity

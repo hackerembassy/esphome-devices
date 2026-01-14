@@ -14,6 +14,28 @@ logger:
 api:
   encryption:
     key: !secret doorlock_apikey
+  on_client_connected: 
+    if:
+      condition:
+        and:
+          - api.connected:
+          - binary_sensor.is_off: pushbutton
+      then:
+        - light.turn_on:
+            id: status_light
+            effect: Ready
+  on_client_disconnected: 
+    if:
+      condition:
+        and:
+          - not: 
+              api.connected:
+          - binary_sensor.is_off: pushbutton
+      then:
+        - light.turn_on:
+            id: status_light
+            effect: Blink faster
+
 
 button:
   - platform: restart
@@ -39,12 +61,27 @@ binary_sensor:
     pin:
       number: GPIO27
       mode:
-        pullup: true
+        pullup: false
         input: true
     name: Button
+    id: pushbutton
     filters:
       - delayed_on: 200ms
       - delayed_off: 200ms
+    on_press: 
+      then:
+        - light.turn_on:
+            id: status_light
+            effect: Fast Pulse
+    on_release: 
+      if:
+        condition:
+          - api.connected:
+        then:
+          - light.turn_on:
+              id: status_light
+              effect: Ready
+        
 
   - platform: status
     name: Node Status
@@ -56,5 +93,54 @@ output:
 
 light:
   - platform: monochromatic
+    id: status_light
     output: led
     name: Status Light
+    effects:
+      - pulse:
+          name: "Ready"
+          max_brightness: 17%
+          min_brightness: 5%
+          transition_length:
+            on_length: 2.0s
+            off_length: 0.7s
+          update_interval: 2.0s
+      - pulse:
+          name: "Very Fast Pulse"
+          transition_length: 0.2s
+          update_interval: 0.2s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.5s
+          update_interval: 0.5s
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 1s
+          update_interval: 1s
+      - strobe:
+          name: Blink
+          colors:
+            - state: true
+              brightness: 100%
+              duration: 250ms
+            - state: false
+              duration: 250ms
+      - strobe:
+          name: Blink faster
+          colors:
+            - state: true
+              brightness: 100%
+              duration: 50ms
+            - state: false
+              duration: 50ms
+      
+
+
+bluetooth_proxy:
+  active: False
+
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1100ms
+    window: 1100ms
+    active: False

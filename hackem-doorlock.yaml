@@ -1,103 +1,95 @@
 esphome:
   name: hackem-doorlock
   friendly_name: "Hackem Doorlock"
+  on_boot: 
+    then:
+      - delay: 0s
+      - light.turn_on:
+          id: status_light
+          effect: "Blink faster"
+          brightness: 100%
+      - component.update: my_display
+
+esp32:
   board: featheresp32
-  platform: esp32
+  framework:
+    type: esp-idf
 
 # Enable logging
 logger:
 
 globals:
-  - id: wifi_connected
-    type: bool
-    restore_value: no
-    initial_value: "false"
   - id: ota_progress
     type: float
     restore_value: no
-  - id: mqtt_connected
-    type: bool
-    restore_value: no
-    initial_value: "false"
-    
-interval:
-  - interval: 1h
-    then:
-      - component.update: my_display
-  - interval: 3000ms
-    then:
-      - if:
-          condition:
-            - wifi.connected:
-          then:
-            - if:
-                condition:
-                  not:
-                    mqtt.connected:
-                then:
-                  - lambda: |-
-                      id(wifi_connected) = true;
-                  - script.execute: status_wifi_connected
-          else:
-            - lambda: |-
-                id(wifi_connected) = false;
-            - script.execute: status_no_connection
-
-mqtt:
-  broker: 192.168.1.5
-  username: door
-  password: !secret mqtt_password
-  on_connect:
-    - lambda: |-
-        id(mqtt_connected) = true;
-    - script.execute: status_ready
-  on_disconnect:
-    - lambda: |-
-        id(mqtt_connected) = false;
-    - script.execute: status_wifi_connected
-  on_message:
-    topic: door
-    payload: "1"
-    then:
-      - mqtt.publish:
-          topic: door/response
-          payload: "unlocked"
-      - switch.turn_on: relay
-      - mqtt.publish:
-          topic: door
-          payload: "zhopa"
-          retain: true
 
 api:
   encryption:
     key: !secret doorlock_apikey
+  on_client_connected: 
+    then:
+      - delay: 0s
+      - light.turn_on:
+          id: status_light
+          effect: "Ready"
+          brightness: 100%
+      - component.update: my_display
+  on_client_disconnected: 
+    then:
+      - delay: 0s
+      - if:
+          condition:
+            not:
+              - api.connected: 
+          then:
+            - light.turn_on:
+                id: status_light
+                effect: "Fast Pulse"
+                brightness: 100%
+            - component.update: my_display 
 
 ota:
+  platform: esphome
   password: !secret ota_pass
-  on_progress:
-    then:
-      - lambda: |-
-          id(ota_progress) = x;
+  # on_progress:
+  #   then:
+  #     - lambda: |-
+  #         id(ota_progress) = x;
       # - component.update: my_display
-  on_begin:
-    then:
-      # - display.page.show: page_ota
-      # - component.update: my_display
-  on_end:
-    then:
-      # - display.page.show: page_reset
-      # - component.update: my_display
-  on_error:
-    then:
-      - script.execute: gui_reset
+  # on_begin:
+  #   then:
+  #     # - display.page.show: page_ota
+  #     # - component.update: my_display
+  # on_end:
+  #   then:
+  #     # - display.page.show: page_reset
+  #     # - component.update: my_display
+  # on_error:
+  #   then:
+  #     - script.execute: gui_reset
 
 wifi:
+  id: wifi_id
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
   ap:
     ssid: "Hackem Fallback"
     password: !secret wifi_fallback_password
+  on_connect:
+    - delay: 0s
+    - light.turn_on:
+        id: status_light
+        effect: "Fast Pulse"
+        brightness: 100%
+    - component.update: my_display
+  on_disconnect:
+    - delay: 0s
+    - light.turn_on:
+        id: status_light
+        effect: "Blink faster"
+        brightness: 100%
+    - component.update: my_display
 
 sensor:
   - platform: wifi_signal
@@ -108,134 +100,30 @@ binary_sensor:
   - platform: status
     name: "Node Status"
     id: system_status
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO0
-  #     inverted: true
-  #     mode:
-  #       input: true
-  #       pullup: true
-  #   name: "T-Display Button 0"
-  #   id: tdisplay_button_input_0
-  #   on_double_click:
-  #     - button.press: restart_button
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO35
-  #     inverted: true
-  #   name: "T-Display Button 1"
-  #   id: tdisplay_button_input_1
-  #   on_click:
-  #     - switch.turn_on: relay
-  - platform: gpio
-    name: Doorbell Button
-    pin:
-      number: GPIO16
-      mode:
-        input: true
-        pulldown: true
-    filters:
-      - delayed_off: 10s
-  - platform: gpio
-    name: Unlock Button
-    pin:
-      number: GPIO17
-      mode:
-        input: true
-        pulldown: true
-    on_press:
-      - switch.turn_on: relay
-
-script:
-  - id: status_no_connection
-    then:
-      - logger.log: "No Connection"
-      - light.turn_on:
-          id: status_light
-          effect: "Blink"
-      - display.page.show: page_not_ok
-      - component.update: my_display
-      - while:
-          condition:
-            not:
-              wifi.connected:
-          then:
-            - delay: 250ms
-      - component.update: my_display
-
-  - id: status_wifi_connected
-    then:
-      - logger.log: "Wi-Fi Connected"
-      - light.turn_on:
-          id: status_light
-          effect: "Fast Pulse"
-      - display.page.show: page_not_ok
-      - component.update: my_display
-      - while:
-          condition:
-            and:
-              - wifi.connected:
-              - not:
-                  mqtt.connected:
-          then:
-            - delay: 100ms
-      - component.update: my_display
-      - delay: 500ms
-      - script.execute: status_ready
-
-  - id: status_ready
-    then:
-      - light.turn_on:
-          id: status_light
-          effect: "None"
-      - display.page.show: page_ok
-      - component.update: my_display
-
-  - id: gui_reset
-    then:
-      - logger.log: "GUI reset"
-      - if:
-          condition:
-            mqtt.connected:
-          then:
-            - light.turn_on:
-                id: status_light
-                effect: "None"
-            - display.page.show: page_ok
-            - component.update: my_display
-      - if:
-          condition:
-            - script.is_running: status_wifi_connected
-          then:
-            - script.stop: status_wifi_connected
-      - if:
-          condition:
-            - script.is_running: status_no_connection
-          then:
-            - script.stop: status_no_connection
-
-  - id: door_opened
-    then:
-      # - light.turn_off:
-      #     id: status_light
-      #     transition_length: 0s
-      # - light.turn_on:
-      #     id: status_light
-      #     transition_length: 2s
-      #     brightness: 100%
-      # - display.page.show: page_door
-      # - component.update: my_display
-      # - light.turn_on:
-      #     id: status_light
-      #     effect: "Blink faster"
-      # - delay: 300ms
-      # - script.execute: gui_reset
 
 switch:
   - platform: gpio
-    name: "Door Relay"
+    name: "Door Out Relay"
     restore_mode: ALWAYS_OFF
     id: relay
+    pin:
+      number: GPIO16
+      inverted: false
+      mode:
+        open_drain: false
+        output: true
+    on_turn_on:
+      # - script.execute: door_opened
+      - delay: 3500ms
+      - if:
+          condition:
+            switch.is_off: alwaysopen
+          then:
+            switch.turn_off: relay
+  - platform: gpio
+    name: "Door In Relay"
+    restore_mode: ALWAYS_OFF
+    id: relayin
     pin:
       number: GPIO5
       inverted: false
@@ -244,7 +132,17 @@ switch:
         output: true
     on_turn_on:
       # - script.execute: door_opened
-      - delay: 200ms
+      - delay: 1000ms
+      - switch.turn_off: relayin
+  - platform: template
+    name: "Door Out Always Open"
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+    optimistic: True
+    id: alwaysopen
+    turn_on_action:
+      - switch.turn_on: relay
+    turn_off_action:
       - switch.turn_off: relay
 
 button:
@@ -255,13 +153,31 @@ button:
 output:
   - platform: ledc
     id: output_status
-    pin: GPIO18
+    pin: GPIO33
     
 image:
   # - file: "doorlock/flag.png"
   #   id: britishflag
   #   resize: 240x135
   #   type: RGB24
+  - file: mdi:check-circle
+    id: check_circle
+    resize: 100x100
+    type: BINARY
+    dither: FLOYDSTEINBERG
+    transparency: chroma_key
+  - file: mdi:wifi-alert
+    id: wifi_alert
+    resize: 100x100
+    type: BINARY
+    dither: FLOYDSTEINBERG
+    transparency: chroma_key
+  - file: mdi:alert
+    id: alert
+    resize: 100x100
+    type: BINARY
+    dither: FLOYDSTEINBERG
+    transparency: chroma_key
   - file: "doorlock/bwflag.png"
     id: britishflag
     # resize: 240x135
@@ -270,7 +186,8 @@ image:
   - file: "doorlock/error.png"
     id: error_icon
     resize: 100x100
-    type: TRANSPARENT_BINARY
+    type: BINARY
+    transparency: chroma_key
     dither: FLOYDSTEINBERG
 
 spi:
@@ -291,16 +208,36 @@ display:
   - platform: waveshare_epaper
     cs_pin: 15
     dc_pin: 27
-    reset_duration: 5ms
+    reset_duration: 2ms
     busy_pin: 25
     reset_pin: 26
     id: my_display
     model: 2.13in-ttgo-dke
     # model: 2.13inv2
-    full_update_every: 5
+    full_update_every: 3
     update_interval: never
     rotation: 90°
     pages:
+      - id: new_ui
+        lambda: |-
+          it.fill(COLOR_ON);
+          it.line(0, 20, it.get_width(), 20, COLOR_OFF);   // header bar
+          it.print(5, 5, id(roboto_12), COLOR_OFF, TextAlign::TOP_LEFT, "Hacker Embassy");
+
+          if (id(system_status).state) {
+              it.print(235, 5, id(roboto_12), COLOR_OFF, TextAlign::TOP_RIGHT, "Online");
+              it.image(75, 25, id(check_circle), COLOR_OFF);
+          } else {
+              it.print(235, 5, id(roboto_12), COLOR_OFF, TextAlign::TOP_RIGHT, "Offline");
+              if (id(wifi_id).is_connected()) {
+                  it.print(120, 115, id(roboto_12), COLOR_OFF, TextAlign::TOP_CENTER, "Wi-Fi connected");
+                  it.image(75, 25, id(alert), COLOR_OFF);
+              } else {
+                  it.print(120, 115, id(roboto_12), COLOR_OFF, TextAlign::TOP_CENTER, "Wi-Fi disconnected");
+                  it.image(75, 25, id(wifi_alert), COLOR_OFF);
+              }
+          }
+
       - id: no_time
         lambda: |-
           it.printf(125, 65, id(clockfont), TextAlign::CENTER, "init");
@@ -318,7 +255,7 @@ display:
           it.rectangle(0, 20, it.get_width(), it.get_height());   // header bar
           it.print(5, 5, id(roboto_12), TextAlign::TOP_LEFT, "Hacker Embassy");
 
-          if (id(mqtt_connected)) {
+          if (id(system_status).state) {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Online");
           } else {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Offline");
@@ -326,7 +263,7 @@ display:
               // it.printf(125, 65, id(clockfont), TextAlign::CENTER, "NOT OK");
           }
 
-          if (id(wifi_connected)) {
+          if (id(wifi_id).is_connected()) {
               it.print(120, 115, id(roboto_12), TextAlign::TOP_CENTER, "Wi-Fi connected");
           } else {
               it.print(120, 115, id(roboto_12), TextAlign::TOP_CENTER, "Wi-Fi disconnected");
@@ -339,6 +276,14 @@ light:
     id: status_light
     output: output_status
     effects:
+      - pulse:
+          name: "Ready"
+          max_brightness: 50%
+          min_brightness: 15%
+          transition_length:
+            on_length: 2.0s
+            off_length: 0.7s
+          update_interval: 2.0s
       - pulse:
       - pulse:
           name: "Very Fast Pulse"
