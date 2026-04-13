@@ -22,26 +22,34 @@ globals:
   - id: ota_progress
     type: float
     restore_value: no
+  - id: api_connected
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 api:
   encryption:
     key: !secret doorlock_apikey
-  on_client_connected: 
-    then:
-      - delay: 0s
-      - light.turn_on:
-          id: status_light
-          effect: "Ready"
-          brightness: 100%
-      - component.update: my_display
+  on_client_connected:
+    - delay: 0s
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lambda: 'id(api_connected) = true;'
+          - light.turn_on:
+              id: status_light
+              effect: "Ready"
+              brightness: 100%
+          - component.update: my_display
   on_client_disconnected: 
     then:
       - delay: 0s
       - if:
           condition:
-            not:
-              - api.connected: 
+            lambda: 'return (0 == client_info.find("Home Assistant "));'
           then:
+            - lambda: 'id(api_connected) = false;'
             - light.turn_on:
                 id: status_light
                 effect: "Fast Pulse"
@@ -224,7 +232,7 @@ display:
           it.line(0, 20, it.get_width(), 20, COLOR_OFF);   // header bar
           it.print(5, 5, id(roboto_12), COLOR_OFF, TextAlign::TOP_LEFT, "Hacker Embassy");
 
-          if (id(system_status).state) {
+          if (id(api_connected)) {
               it.print(235, 5, id(roboto_12), COLOR_OFF, TextAlign::TOP_RIGHT, "Online");
               it.image(75, 25, id(check_circle), COLOR_OFF);
           } else {
@@ -255,7 +263,7 @@ display:
           it.rectangle(0, 20, it.get_width(), it.get_height());   // header bar
           it.print(5, 5, id(roboto_12), TextAlign::TOP_LEFT, "Hacker Embassy");
 
-          if (id(system_status).state) {
+          if (id(api_connected)) {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Online");
           } else {
               it.print(235, 5, id(roboto_12), TextAlign::TOP_RIGHT, "Offline");
